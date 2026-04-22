@@ -3,8 +3,13 @@ package br.com.fatec.api.service;
 import br.com.fatec.api.dto.ProdutoRequestDTO;
 import br.com.fatec.api.dto.ProdutoResponseDTO;
 import br.com.fatec.api.model.Produto;
+import br.com.fatec.api.model.Categoria;
 import br.com.fatec.api.repository.ProdutoRepository;
+import br.com.fatec.api.repository.CategoriaRepository;
+
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -16,11 +21,10 @@ public class ProdutoService {
     @Autowired
     private ProdutoRepository repository;
 
-    //    public List<Produto> listarTodos() {
-//
-//        return repository.findAll();
-//    }
-    // Listar: Converte a lista de Entities para DTOs
+    @Autowired
+    private CategoriaRepository categoriaRepository;
+
+    // 🔹 LISTAR TODOS
     public List<ProdutoResponseDTO> listarTodos() {
         return repository.findAll()
                 .stream()
@@ -28,70 +32,70 @@ public class ProdutoService {
                 .toList();
     }
 
-    //    // O buscaPorId agora retorna a "caixa" (Optional)
-//    public Optional<Produto> buscarPorId(Long id) {
-//
-//        return repository.findById(id);
-//    }
-    // Buscar por ID: Retorna Optional de DTO
+    // 🔹 LISTAR PAGINADO
+    public Page<ProdutoResponseDTO> listarTodos(Pageable pageable) {
+        return repository.findAll(pageable)
+                .map(ProdutoResponseDTO::fromEntity);
+    }
+
+    // 🔹 BUSCAR POR NOME
+    public Page<ProdutoResponseDTO> buscarPorNome(String nome, Pageable pageable) {
+        return repository.findByNomeContainingIgnoreCase(nome, pageable)
+                .map(ProdutoResponseDTO::fromEntity);
+    }
+
+    // 🔹 BUSCAR POR ID
     public Optional<ProdutoResponseDTO> buscarPorId(Long id) {
         return repository.findById(id)
                 .map(ProdutoResponseDTO::fromEntity);
-        // Se a Entity existir, o .map() a transforma em DTO.
-        // Se não existir, retorna um Optional vazio.
     }
 
-    //    public Produto salvar(Produto produto) {
-//
-//        return repository.save(produto);
-//    }
-    // Salvar: Recebe RequestDTO -> Converte para Entity -> Salva -> Retorna ResponseDTO
+    // 🔹 SALVAR COM CATEGORIA
     public ProdutoResponseDTO salvar(ProdutoRequestDTO dto) {
+
         Produto produto = new Produto();
         produto.setNome(dto.nome());
         produto.setPreco(dto.preco());
+
+        Categoria categoria = categoriaRepository.findById(dto.categoriaId())
+                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+
+        produto.setCategoria(categoria);
 
         Produto salvo = repository.save(produto);
         return ProdutoResponseDTO.fromEntity(salvo);
     }
 
-    //    public Produto atualizar(Long id, Produto novo) {
-//        // Aqui precisamos descompactar o Optional ou lançar erro se estiver vazio
-//        Produto existente = buscarPorId(id)
-//                .orElseThrow(() -> new RuntimeException("Produto não encontrado com ID: " + id));
-//
-//        existente.setNome(novo.getNome());
-//        existente.setPreco(novo.getPreco());
-//        return repository.save(existente);
-//    }
-    // Atualizar: O ponto onde geralmente ocorre o erro de tipos
+    // 🔹 ATUALIZAR COM CATEGORIA
     public ProdutoResponseDTO atualizar(Long id, ProdutoRequestDTO dto) {
-        // Busca a Entity no banco
+
         Produto existente = repository.findById(id)
                 .orElseThrow(() -> new RuntimeException("Produto não encontrado"));
 
-        // Transfere os dados do DTO para o Entity
         existente.setNome(dto.nome());
         existente.setPreco(dto.preco());
 
-        // Salva e converte para DTO de saída
+        Categoria categoria = categoriaRepository.findById(dto.categoriaId())
+                .orElseThrow(() -> new RuntimeException("Categoria não encontrada"));
+
+        existente.setCategoria(categoria);
+
         Produto atualizado = repository.save(existente);
         return ProdutoResponseDTO.fromEntity(atualizado);
     }
 
-    //    public void deletar(Long id) {
-//        // Mesma lógica: descompacta para poder deletar
-//        Produto p = repository.findAllById(id)
-//                .orElseThrow(() -> new RuntimeException("Não é possível deletar: ID inexistente"));
-//        repository.delete(p);
-//    }
+    // 🔹 DELETAR
     public void deletar(Long id) {
-        // Valida se o ID existe antes de chamar o deleteById
         if (!repository.existsById(id)) {
             throw new RuntimeException("Não é possível deletar: Produto não encontrado com ID " + id);
         }
 
-        // O método correto para um único ID é deleteById
         repository.deleteById(id);
+    }
+
+    // 🔥 BUSCAR POR CATEGORIA (ESSA PARTE FALTAVA)
+    public Page<ProdutoResponseDTO> buscarPorCategoria(Long categoriaId, Pageable pageable) {
+        return repository.findByCategoriaId(categoriaId, pageable)
+                .map(ProdutoResponseDTO::fromEntity);
     }
 }

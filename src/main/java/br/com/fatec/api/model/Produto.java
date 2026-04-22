@@ -1,21 +1,18 @@
 package br.com.fatec.api.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 import jakarta.validation.constraints.Size;
 import lombok.Data;
 
-@Entity // Diz ao JPA que a classe é uma tabela
-@Data   // Lombok: gera getters/setters/etc
+@Entity
+@Data
 public class Produto {
 
-    @Id // Chave primária
-    @GeneratedValue(strategy = GenerationType.IDENTITY) // "IDENTITY" Auto-incremento
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @NotBlank(message = "O nome é obrigatório e não pode conter apenas espaços em branco")
@@ -25,4 +22,9 @@ public class Produto {
     @NotNull(message = "O preço é obrigatório")
     @Positive(message = "O preço deve ser um valor positivo maior que zero")
     private Double preco;
+
+    // 🔥 NOVO: relacionamento com Categoria
+    @ManyToOne
+    @JoinColumn(name = "categoria_id", nullable = false)
+    private Categoria categoria;
 }
