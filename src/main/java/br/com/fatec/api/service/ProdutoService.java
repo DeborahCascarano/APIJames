@@ -12,7 +12,6 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.Optional;
 
 @Service
@@ -23,14 +22,6 @@ public class ProdutoService {
 
     @Autowired
     private CategoriaRepository categoriaRepository;
-
-    // 🔹 LISTAR TODOS
-    public List<ProdutoResponseDTO> listarTodos() {
-        return repository.findAll()
-                .stream()
-                .map(ProdutoResponseDTO::fromEntity)
-                .toList();
-    }
 
     // 🔹 LISTAR PAGINADO
     public Page<ProdutoResponseDTO> listarTodos(Pageable pageable) {
@@ -89,11 +80,10 @@ public class ProdutoService {
         if (!repository.existsById(id)) {
             throw new RuntimeException("Não é possível deletar: Produto não encontrado com ID " + id);
         }
-
         repository.deleteById(id);
     }
 
-    // 🔥 BUSCAR POR CATEGORIA (ESSA PARTE FALTAVA)
+    // 🔹 BUSCAR POR CATEGORIA
     public Page<ProdutoResponseDTO> buscarPorCategoria(Long categoriaId, Pageable pageable) {
         return repository.findByCategoriaId(categoriaId, pageable)
                 .map(ProdutoResponseDTO::fromEntity);
